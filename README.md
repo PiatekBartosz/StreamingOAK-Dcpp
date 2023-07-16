@@ -11,5 +11,5 @@ https://www.youtube.com/watch?v=Fc0xm39cpKc
 ![Alt text](img/image-2.png)
 
 # Used dependencies
-depthai-core: https://github.com/luxonis/depthai-core/releases/download/v2.22.0/depthai-core-v2.22.0-win64.zip\n
+depthai-core: https://github.com/luxonis/depthai-core/releases/download/v2.22.0/depthai-core-v2.22.0-win64.zip <br />
 opencv: https://sourceforge.net/projects/opencvlibrary/files/4.7.0/opencv-4.7.0-windows.exe/download
