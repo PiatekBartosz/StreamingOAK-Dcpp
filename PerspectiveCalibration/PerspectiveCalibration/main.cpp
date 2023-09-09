@@ -1,6 +1,10 @@
 #include "depthai/depthai.hpp"
 #include <stdio.h>
 #include <vector>
+#include <fstream>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
+
 
 struct MouseParameters {
     std::vector<cv::Point> corners;
@@ -8,9 +12,38 @@ struct MouseParameters {
     cv::Mat transformMat;
 };
 
+void serializeCvMat(cv::Mat& inputMat, std::string& outputFileName);
 void MouseCallbackFunction(int event, int x, int y, int flags, void* userdata);
 
+void serializeCvMat(cv::Mat& inputMat, std::string& outputFileName) {
+    std::ofstream outputFileStream(outputFileName, std::ios::binary);
+    boost::archive::text_oarchive outArchive(outputFileStream);
+
+    int rows = inputMat.rows;
+    int cols = inputMat.cols;
+    int type = inputMat.type();
+
+    // serialize cv::Mat metadata
+    outArchive << rows;
+    outArchive << cols;
+    outArchive << type;
+
+    // serialize every element of cv::Mat, assuming that the matrix is continous   
+    const  size_t dataSize = rows * cols * inputMat.elemSize();
+    outArchive << boost::serialization::make_array(inputMat.ptr(), dataSize);
+}
+
+void MouseCallbackFunction(int event, int x, int y, int flags, void* userdata) {
+    MouseParameters* mp = (MouseParameters*)userdata;
+
+    // get mouse position after LPM click
+    if (event == cv::EVENT_LBUTTONDOWN && !(mp->warped)) {
+        mp->corners.push_back(cv::Point(x, y));
+    }
+}
+
 int main(void) {
+    std::string outputFileName = "perspectiveCalibrationMatrix.dat";
     MouseParameters mp;
     cv::Scalar colors[4] = { cv::Scalar(255, 0, 0), cv::Scalar(0, 255, 0), cv::Scalar(0, 0, 255), cv::Scalar (0, 255, 255) };
 
@@ -52,14 +85,13 @@ int main(void) {
     // output queue will be used to get the rgb frames from the output defined above
     auto qRgb = device.getOutputQueue("rgb", 4, false);
 
-    std::cout << "Mark conrners of the woarp in this specific order:" << std::endl;
+    std::cout << "Mark conrners of the warp in this order:" << std::endl;
     std::cout << "TOP_LEFT, BOT_LEFT, BOT_RIGHT, TOP_RIGHT" << std::endl;
     
     while (true) {
         // get frame
         std::shared_ptr<dai::ImgFrame> inRgb = qRgb->get<dai::ImgFrame>();
         cv::Mat frame = inRgb->getCvFrame();
-        cv::Mat originalFrame = frame;
         int height = frame.size().height;
         int width = frame.size().width;
 
@@ -68,6 +100,12 @@ int main(void) {
         }
 
         cv::namedWindow("Perspective Calibration");
+
+        cv::putText(frame, "Mark conrners of the woarp in this order:",
+            cv::Point2i(10, 20), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(0, 255, 0), 1);
+        cv::putText(frame, "TOP_LEFT, BOT_LEFT, BOT_RIGHT, TOP_RIGHT",
+            cv::Point2i(10, 40), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(0, 255, 0), 1);
+
         cv::imshow("Perspective Calibration", frame);
 
         // set callback
@@ -79,10 +117,10 @@ int main(void) {
             cv::Point2f botLeft = mp.corners[1];
             cv::Point2f botRight = mp.corners[2];
             cv::Point2f topRight = mp.corners[3];
-            cv::Point2f dstPoints[4] = {topLeft, botLeft, botRight, topRight};
+            cv::Point2f srcPoints[4] = {topLeft, botLeft, botRight, topRight};
 
             // create src points
-            cv::Point2f srcPoints[4] = {cv::Point2f(0, 0), cv::Point2f(0, height), cv::Point2f(width, height), cv::Point2f(width, 0) };
+            cv::Point2f dstPoints[4] = {cv::Point2f(0, 0), cv::Point2f(0, height), cv::Point2f(width, height), cv::Point2f(width, 0) };
 
             // get perspective transform matrix
             mp.transformMat = cv::getPerspectiveTransform(srcPoints, dstPoints);
@@ -92,19 +130,24 @@ int main(void) {
         else if (mp.warped) {
             // warp frame
             cv::Mat warpedFrame;
-            cv::warpPerspective(originalFrame, warpedFrame, mp.transformMat, cv::Size(width, height));
+            cv::warpPerspective(frame, warpedFrame, mp.transformMat, cv::Size(width, height));
+
+            cv::putText(warpedFrame, "If the warp is correct press y,", 
+                cv::Point2i(20, 20), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(0, 255, 0), 1);
+            cv::putText(warpedFrame, "otherwise press n", 
+                cv::Point2i(20, 40), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(0, 255, 0), 1);
+
             cv::imshow("Warped perspecive", warpedFrame);
 
             int key = cv::waitKey(1);
             if (key == 'y' || key == 'Y') {
-                // TODO save matrix
-                std::cout << "TODO saving to file";
+                serializeCvMat(mp.transformMat, outputFileName);
+                break;
             }
 
             else if (key == 'n' || key == 'N') {
-                mp.corners.clear();
-                mp.warped = false;
-                cv::destroyWindow("Warped perspective");
+                std::cout << "perspectiveCalibrationMatrix.dat";
+                cv::destroyAllWindows();
             }
         }
 
@@ -116,11 +159,3 @@ int main(void) {
     return 0;
 }
 
-void MouseCallbackFunction(int event, int x, int y, int flags, void* userdata) {
-    MouseParameters* mp = (MouseParameters*)userdata;
-
-    // get mouse position after LPM click
-    if (event == cv::EVENT_LBUTTONDOWN && !(mp->warped)){
-        mp->corners.push_back(cv::Point(x, y));
-    }
-}

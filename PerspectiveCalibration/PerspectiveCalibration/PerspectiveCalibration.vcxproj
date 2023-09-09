@@ -79,7 +79,7 @@
     <LibraryPath>C:\ProgrammingResources\opencv\build\x64\vc16\lib;C:\ProgrammingResources\depthai-core-v2.22.0-win64\depthai-core-v2.22.0-win64\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>C:\ProgrammingResources\opencv\build\include;C:\ProgrammingResources\depthai-core-v2.22.0-win64\depthai-core-v2.22.0-win64\lib\cmake\depthai\dependencies\include;C:\ProgrammingResources\depthai-core-v2.22.0-win64\depthai-core-v2.22.0-win64\include\depthai-shared\3rdparty;C:\ProgrammingResources\depthai-core-v2.22.0-win64\depthai-core-v2.22.0-win64\include;$(IncludePath)</IncludePath>
+    <IncludePath>C:\ProgrammingResources\opencv\build\include;C:\ProgrammingResources\depthai-core-v2.22.0-win64\depthai-core-v2.22.0-win64\lib\cmake\depthai\dependencies\include;C:\ProgrammingResources\depthai-core-v2.22.0-win64\depthai-core-v2.22.0-win64\include\depthai-shared\3rdparty;C:\ProgrammingResources\depthai-core-v2.22.0-win64\depthai-core-v2.22.0-win64\include;C:\ProgrammingResources\boost_1_83_0;$(IncludePath)</IncludePath>
     <LibraryPath>C:\ProgrammingResources\opencv\build\x64\vc16\lib;C:\ProgrammingResources\depthai-core-v2.22.0-win64\depthai-core-v2.22.0-win64\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -127,6 +127,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>depthai-cored.lib;depthai-opencvd.lib;opencv_world470d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\ProgrammingResources\boost_1_83_0\lib64-msvc-14.3;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
