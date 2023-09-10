@@ -3,7 +3,6 @@
 
 // Inludes common necessary includes for development using depthai library
 #include "depthai/depthai.hpp"
-#include "main.h"
 #include "DepthAiWrapper.h"
 
 int main() {
